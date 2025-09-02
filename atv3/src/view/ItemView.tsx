@@ -22,6 +22,7 @@ const ItemView = () => {
     items,
     dialogVisible,
     setInputText,
+    inputText,
     editingItem,
     addItem,
     openDialog,
@@ -56,7 +57,7 @@ const ItemView = () => {
       <Text>{item.title}</Text>
     </TouchableOpacity>
   );
-
+ 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Lista de Itens</Text>
@@ -71,7 +72,6 @@ const ItemView = () => {
         keyExtractor={(item) => item.id}
       />
 
-      {/* Modal */}
       <Modal visible={dialogVisible} transparent={true} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.dialog}>
@@ -88,7 +88,7 @@ const ItemView = () => {
                   <TextInput
                     mode="outlined"
                     label="Digite o título"
-                    value={value}
+                    value={inputText}
                     onChangeText={(text) => {
                       onChange(text);
                       setInputText(text);
@@ -131,7 +131,6 @@ const ItemView = () => {
         </View>
       </Modal>
 
-      {/* Toast container */}
       <Toast />
     </View>
   );
