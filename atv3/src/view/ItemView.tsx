@@ -5,17 +5,22 @@ import {
   TouchableOpacity,
   FlatList,
   Modal,
-  TextInput,
   StyleSheet,
 } from 'react-native';
 import { useItemController } from '../controllers/ItemController';
 import Item from '../model/Item';
+import { IconButton, MD3Colors, TextInput } from 'react-native-paper';
+import { useForm, Controller } from 'react-hook-form';
+import Toast from 'react-native-toast-message';
+
+type FormData = {
+  title: string;
+};
 
 const ItemView = () => {
   const {
     items,
     dialogVisible,
-    inputText,
     setInputText,
     editingItem,
     addItem,
@@ -25,6 +30,26 @@ const ItemView = () => {
     updateItem,
     deleteItem,
   } = useItemController();
+
+  const { control, handleSubmit, reset } = useForm<FormData>({
+    defaultValues: { title: '' },
+  });
+
+  const onSubmit = (data: FormData) => {
+    if (editingItem) {
+      updateItem(data.title);
+      Toast.show({ type: 'success', text1: 'Item atualizado!' });
+    } else {
+      addItem(data.title);
+      Toast.show({ type: 'success', text1: 'Item adicionado!' });
+    }
+    reset();
+  };
+
+  const handleDelete = () => {
+    deleteItem();
+    Toast.show({ type: 'error', text1: 'Item excluído!' });
+  };
 
   const renderItem = ({ item }: { item: Item }) => (
     <TouchableOpacity style={styles.item} onPress={() => openEditModal(item)}>
@@ -37,7 +62,7 @@ const ItemView = () => {
       <Text style={styles.title}>Lista de Itens</Text>
 
       <TouchableOpacity style={styles.addButton} onPress={openDialog}>
-        <Text>Adicionar Item</Text>
+        <IconButton icon="plus" iconColor={MD3Colors.error50} size={20} />
       </TouchableOpacity>
 
       <FlatList
@@ -46,6 +71,7 @@ const ItemView = () => {
         keyExtractor={(item) => item.id}
       />
 
+      {/* Modal */}
       <Modal visible={dialogVisible} transparent={true} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.dialog}>
@@ -53,11 +79,27 @@ const ItemView = () => {
               {editingItem ? 'Editar Item' : 'Novo Item'}
             </Text>
 
-            <TextInput
-              style={styles.input}
-              placeholder="Digite o título"
-              value={inputText}
-              onChangeText={setInputText}
+            <Controller
+              control={control}
+              name="title"
+              rules={{ required: 'O título é obrigatório' }}
+              render={({ field: { onChange, value }, fieldState: { error } }) => (
+                <View style={{ width: '100%', marginBottom: 15 }}>
+                  <TextInput
+                    mode="outlined"
+                    label="Digite o título"
+                    value={value}
+                    onChangeText={(text) => {
+                      onChange(text);
+                      setInputText(text);
+                    }}
+                    style={styles.input}
+                  />
+                  {error && (
+                    <Text style={styles.errorText}>{error.message}</Text>
+                  )}
+                </View>
+              )}
             />
 
             <View style={styles.buttons}>
@@ -68,7 +110,7 @@ const ItemView = () => {
               {editingItem && (
                 <TouchableOpacity
                   style={[styles.button, styles.deleteButton]}
-                  onPress={deleteItem}
+                  onPress={handleDelete}
                 >
                   <Text style={[styles.buttonText, styles.deleteButtonText]}>
                     Excluir
@@ -78,7 +120,7 @@ const ItemView = () => {
 
               <TouchableOpacity
                 style={styles.button}
-                onPress={editingItem ? updateItem : addItem}
+                onPress={handleSubmit(onSubmit)}
               >
                 <Text style={styles.buttonText}>
                   {editingItem ? 'Salvar' : 'Adicionar'}
@@ -88,11 +130,15 @@ const ItemView = () => {
           </View>
         </View>
       </Modal>
+
+      {/* Toast container */}
+      <Toast />
     </View>
   );
 };
 
 export default ItemView;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -126,24 +172,25 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   dialog: {
-    width: '80%',
+    width: '85%',
     backgroundColor: '#fff',
     borderRadius: 10,
     padding: 20,
-    alignItems: 'center',
+    alignItems: 'stretch', // garante que input expanda
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 15,
+    textAlign: 'center',
   },
   input: {
     width: '100%',
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 10,
-    marginBottom: 20,
+  },
+  errorText: {
+    color: 'red',
+    marginTop: 4,
+    fontSize: 12,
   },
   buttons: {
     flexDirection: 'row',
