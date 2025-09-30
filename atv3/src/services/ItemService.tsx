@@ -1,21 +1,51 @@
 import Item from '../model/Item';
 
+
 class ItemService {
   private items: Item[] = [
-    { id: '1', title: 'Item 1' },
-    { id: '2', title: 'Item 2' },
+    {
+      id: '1',
+      title: 'Item 1',
+      description: 'Descrição do item 1',
+      image: 'https://placehold.co/200x200',
+      breed: 'Desconhecida',
+    },
+    {
+      id: '2',
+      title: 'Item 2',
+      description: 'Descrição do item 2',
+      image: 'https://placehold.co/200x200',
+      breed: 'Desconhecida',
+    },
   ];
 
   getAllItems(): Item[] {
     return this.items;
   }
 
-  addItem(title: string): void {
+  async addItem(title: string, description: string): Promise<Item> {
+    // Busca imagem aleatória de cachorro
+    const res = await fetch('https://dog.ceo/api/breeds/image/random');
+    const data = await res.json();
+    const imageUrl = data.message;
+
+    // Extrai a raça da URL da imagem
+    let breed = 'Desconhecida';
+    const breedMatch = imageUrl.match(/breeds\/([a-zA-Z0-9-]+)\//);
+    if (breedMatch && breedMatch[1]) {
+      breed = breedMatch[1].replace(/-/g, ' ');
+    }
+
     const newItem: Item = {
       id: Date.now().toString(),
       title: title.trim(),
+      description: description.trim(),
+      image: imageUrl,
+      breed,
     };
+
     this.items.push(newItem);
+    return newItem;
   }
 
   updateItem(id: string, newTitle: string): void {

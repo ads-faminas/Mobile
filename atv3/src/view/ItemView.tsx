@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   View,
   Text,
@@ -6,6 +5,8 @@ import {
   FlatList,
   Modal,
   StyleSheet,
+  Image,
+  Dimensions
 } from 'react-native';
 import { useItemController } from '../controllers/ItemController';
 import Item from '../model/Item';
@@ -15,6 +16,7 @@ import Toast from 'react-native-toast-message';
 
 type FormData = {
   title: string;
+  description: string;
 };
 
 const ItemView = () => {
@@ -30,18 +32,20 @@ const ItemView = () => {
     openEditModal,
     updateItem,
     deleteItem,
+    inputDesc,
+    setInputDesc,
   } = useItemController();
 
   const { control, handleSubmit, reset } = useForm<FormData>({
-    defaultValues: { title: '' },
+    defaultValues: { title: '', description: '' },
   });
 
   const onSubmit = (data: FormData) => {
     if (editingItem) {
-      updateItem(data.title);
+      updateItem(data.title, data.description);
       Toast.show({ type: 'success', text1: 'Item atualizado!' });
     } else {
-      addItem(data.title);
+      addItem(data.title, data.description);
       Toast.show({ type: 'success', text1: 'Item adicionado!' });
     }
     reset();
@@ -52,9 +56,23 @@ const ItemView = () => {
     Toast.show({ type: 'error', text1: 'Item excluído!' });
   };
 
+  const screenWidth = Dimensions.get('window').width;
+  const imageSize = Math.min(120, screenWidth * 0.25);
+
   const renderItem = ({ item }: { item: Item }) => (
     <TouchableOpacity style={styles.item} onPress={() => openEditModal(item)}>
-      <Text>{item.title}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Image
+          source={{ uri: item.image }}
+          style={{ width: imageSize, height: imageSize, borderRadius: 10, marginRight: 12 }}
+          resizeMode="cover"
+        />
+        <View style={{ flex: 1 }}>
+          <Text style={styles.itemTitle}>{item.title}</Text>
+          <Text style={styles.itemDesc}>{item.description}</Text>
+          <Text style={styles.itemBreed}>Raça: {item.breed}</Text>
+        </View>
+      </View>
     </TouchableOpacity>
   );
  
@@ -84,7 +102,7 @@ const ItemView = () => {
               name="title"
               rules={{ required: 'O título é obrigatório' }}
               render={({ field: { onChange, value }, fieldState: { error } }) => (
-                <View style={{ width: '100%', marginBottom: 15 }}>
+                <View style={{ width: '100%', marginBottom: 10 }}>
                   <TextInput
                     mode="outlined"
                     label="Digite o título"
@@ -101,6 +119,30 @@ const ItemView = () => {
                 </View>
               )}
             />
+            <Controller
+              control={control}
+              name="description"
+              rules={{ required: 'A descrição é obrigatória' }}
+              render={({ field: { onChange, value }, fieldState: { error } }) => (
+                <View style={{ width: '100%', marginBottom: 15 }}>
+                  <TextInput
+                    mode="outlined"
+                    label="Digite a descrição"
+                    value={inputDesc}
+                    onChangeText={(text) => {
+                      onChange(text);
+                      setInputDesc(text);
+                    }}
+                    style={styles.input}
+                  />
+                  {error && (
+                    <Text style={styles.errorText}>{error.message}</Text>
+                  )}
+                </View>
+              )}
+            />
+
+ 
 
             <View style={styles.buttons}>
               <TouchableOpacity style={styles.button} onPress={closeDialog}>
@@ -214,4 +256,19 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     color: '#fff',
   },
+  itemTitle: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginBottom: 2,
+  },
+  itemDesc: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 2,
+  },
+  itemBreed: {
+    fontSize: 13,
+    color: '#888',
+  },
+  
 });
